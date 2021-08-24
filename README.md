@@ -8,3 +8,4 @@ simple blog app
 5. configure static files with html
 6. email sending form
 7. comments for every blog post
+8. tags and posts with common tags
