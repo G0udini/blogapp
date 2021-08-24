@@ -9,3 +9,4 @@ simple blog app
 6. email sending form
 7. comments for every blog post
 8. tags and posts with common tags
+9. own filters and markdown
