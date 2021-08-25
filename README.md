@@ -10,3 +10,7 @@ simple blog app
 7. comments for every blog post
 8. tags and posts with common tags
 9. own filters and markdown
+10. sitemap
+11. RSS feed for subscribtions
+12. connact ot Postgresql
+13. trigram search
