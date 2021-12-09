@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    restart: always
+    command: "/usr/src/app/entrypoint.sh db python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./blog:/usr/src/app/blog
+      - ./blog_app:/usr/src/app/blog_app
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    depends_on:
+     - db
+
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+volumes:
+  postgres_data:  

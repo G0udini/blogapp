@@ -7,12 +7,7 @@ from .forms import EmailPostForm, CommentForm, SearchForm
 from django.core.mail import send_mail
 from taggit.models import Tag
 from django.core.paginator import Paginator
-from django.contrib.postgres.search import (
-    SearchVector,
-    SearchQuery,
-    SearchRank,
-    TrigramSimilarity,
-)
+from django.contrib.postgres.search import TrigramSimilarity
 
 # class PostListView(ListView):
 #     queryset = Post.published.all()

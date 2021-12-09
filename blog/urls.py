@@ -15,7 +15,7 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("blog/", include("blog_app.urls", namespace="blog")),
     path("admin/", admin.site.urls),
     path("__debug__/", include(debug_toolbar.urls)),
+    path("", include("blog_app.urls", namespace="blog")),
 ]
