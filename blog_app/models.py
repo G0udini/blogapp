@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.text import slugify
 from django.urls import reverse
 from taggit.managers import TaggableManager
 
@@ -21,6 +22,7 @@ class Post(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="blog_posts"
     )
+    image = models.ImageField(upload_to="images/%Y/%m/%d/", blank=True)
     body = models.TextField()
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
@@ -34,6 +36,11 @@ class Post(models.Model):
             args=[self.publish.year, self.publish.month, self.publish.day, self.slug],
         )
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
     objects = models.Manager()
     published = PublishedManager()
 
@@ -46,8 +53,9 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
-    name = models.CharField(max_length=80)
-    email = models.EmailField()
+    commentator = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_comments"
+    )
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
