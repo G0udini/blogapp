@@ -9,7 +9,8 @@ COPY . .
 
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc \
-    && apt-get -y install postgresql-client
+    && apt-get -y install postgresql-client \
+    && apt-get install tzdata
 
 RUN chmod +x entrypoint.sh
 
