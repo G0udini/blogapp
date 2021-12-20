@@ -1,118 +1,137 @@
 from django.shortcuts import render, get_object_or_404
-
-from django.views.generic import ListView
 from django.db.models import Count
-from .models import Post
-from .forms import EmailPostForm, CommentForm, SearchForm
+from django.views.generic.base import View
 from django.core.mail import send_mail
-from taggit.models import Tag
 from django.core.paginator import Paginator
 from django.contrib.postgres.search import TrigramSimilarity
 
-# class PostListView(ListView):
-#     queryset = Post.published.all()
-#     context_object_name = "posts"
-#     paginate_by = 3
-#     template_name = "blog_app/post/list.html"
+from .models import Comment, Post
+from .forms import EmailPostForm, CommentForm, SearchForm
 
 
-def post_list(request, tag_slug=None):
-    objects_list = Post.published.all()
-    tag = None
+class PostListView(View):
+    def get(self, request, *args, **kwargs):
+        posts = (
+            Post.published.select_related("author")
+            .prefetch_related("tags")
+            .only("id", "title", "publish", "slug", "tags", "author__username", "image")
+        )
+        tag = kwargs.get("tag_slug", None)
+        page = request.GET.get("page", 1)
+        form = SearchForm()
+        if tag:
+            posts = posts.filter(tags__name__in=[tag])
+        if "search" in request.GET:
+            form = SearchForm(request.GET)
+            if form.is_valid():
+                search = form.cleaned_data["search"]
+                posts = (
+                    posts.annotate(
+                        similarity=TrigramSimilarity("title", search)
+                        + TrigramSimilarity("body", search)
+                    )
+                    .filter(similarity__gte=0.3)
+                    .order_by("-similarity")
+                )
+        paginator = Paginator(posts, 4)
+        posts = paginator.get_page(page)
 
-    if tag_slug:
-        tag = get_object_or_404(Tag, slug=tag_slug)
-        objects_list = objects_list.filter(tags__in=[tag])
-    paginator = Paginator(objects_list, 3)
-    page = request.GET.get("page")
-    posts = paginator.get_page(page)
-    return render(
-        request, "blog_app/post/list.html", {"page": page, "posts": posts, "tag": tag}
-    )
+        context = {
+            "posts": posts,
+            "page": page,
+            "page_limit": paginator.num_pages,
+            "tag": tag,
+            "form": form,
+        }
+
+        template_name = "blog_app/post/list.html"
+        if self.request.is_ajax():
+            template_name = "blog_app/post/list_wrapper.html"
+
+        return render(request, template_name, context)
 
 
-def post_share(request, post_id):
-    post = get_object_or_404(Post, id=post_id, status="published")
-    sent = False
-    if request.method == "POST":
+class PostShare(View):
+    template_name = "blog_app/post/share.html"
+
+    def get(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id, status="published")
+        sent = False
+        form = EmailPostForm()
+        return render(
+            request,
+            self.template_name,
+            {"post": post, "form": form, "sent": sent},
+        )
+
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id, status="published")
+        sent = False
         form = EmailPostForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
             post_url = request.build_absolute_uri(post.get_absolute_url())
-            subject = (
-                f"{cd['name']} ({cd['email']}) recommends you reading {post.title}"
-            )
+            if request.user.is_authenticated:
+                subject_prefix = f"{request.user.username} recommends"
+            else:
+                subject_prefix = "I recommend"
+            subject = f"{subject_prefix} you to read {post.title}"
             massage = (
-                f"Read '{post.title}' at "
-                f"{post_url}\n\n{cd['name']}'s comments: {cd['comments']}"
+                f"Read '{post.title}' at " f"{post_url}\n\nComments: {cd['comments']}"
             )
             send_mail(subject, massage, "ruspro1927@gmail.com", [cd["to"]])
             sent = True
-    else:
-        form = EmailPostForm()
-    return render(
-        request,
-        "blog_app/post/share.html",
-        {"post": post, "form": form, "sent": sent},
-    )
+            return render(
+                request,
+                self.template_name,
+                {"post": post, "form": form, "sent": sent},
+            )
 
 
-def post_detail(request, year, month, day, post):
-    post = get_object_or_404(
-        Post,
-        slug=post,
-        status="published",
-        publish__year=year,
-        publish__month=month,
-        publish__day=day,
-    )
-    comments = post.comments.filter(active=True)
-    new_comment = None
-    if request.method == "POST":
-        comment_form = CommentForm(data=request.POST)
-        if comment_form.is_valid():
-            new_comment = comment_form.save(commit=False)
-            new_comment.post = post
-            new_comment.save()
-    else:
-        comment_form = CommentForm()
-    post_tags_ids = post.tags.values_list("id", flat=True)
-    similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
-    similar_posts = similar_posts.annotate(same_tags=Count("tags")).order_by(
-        "-same_tags", "-publish"
-    )[:4]
-    return render(
-        request,
-        "blog_app/post/detail.html",
-        {
-            "post": post,
-            "comments": comments,
-            "new_comment": new_comment,
-            "comment_form": comment_form,
-            "similar_posts": similar_posts,
-        },
-    )
+class PostDeatail(View):
+    template_name = "blog_app/post/detail.html"
 
-
-def post_search(request):
-    form = SearchForm()
-    query = None
-    results = []
-    if "query" in request.GET:
-        form = SearchForm(request.GET)
-    if form.is_valid():
-        query = form.cleaned_data["query"]
-        # search_vector = SearchVector("title", weight="A") + SearchVector(
-        #     "body", weight="B"
-        # )
-        # search_query = SearchQuery(query)
-        results = (
-            Post.objects.annotate(similarity=TrigramSimilarity("title", query))
-            .filter(similarity__gte=0.3)
-            .order_by("-similarity")
+    def get_context_data(self, **kwargs):
+        post = get_object_or_404(
+            Post.published.select_related("author").only(
+                "id", "title", "publish", "slug", "author__username", "image", "body"
+            ),
+            slug=kwargs["post"],
+            publish__year=kwargs["year"],
+            publish__month=kwargs["month"],
+            publish__day=kwargs["day"],
         )
-    return render(
-        request,
-        "blog_app/post/search.html",
-        {"form": form, "query": query, "results": results},
-    )
+        comments = (
+            Comment.objects.filter(active=True, post=post.id)
+            .select_related("commentator")
+            .only("commentator__username", "created", "body")
+        )
+        tags_ids = post.tags.values_list("id", flat=True)
+        similar_posts = Post.published.filter(tags__in=tags_ids).exclude(id=post.id)
+        similar_posts = (
+            similar_posts.annotate(same_tags=Count("tags"))
+            .order_by("-same_tags", "-publish")[:5]
+            .values("title")
+        )
+        return {
+            "post": post,
+            "similar_posts": similar_posts,
+            "comments": comments,
+        }
+
+    def get(self, request, *args, **kwargs):
+        comment_form = CommentForm()
+        context = self.get_context_data(**kwargs)
+        context["comment_form"] = comment_form
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        comment_form = CommentForm(data=request.POST)
+        context = self.get_context_data(**kwargs)
+        if comment_form.is_valid() and request.user.is_authenticated:
+            new_comment = comment_form.save(commit=False)
+            new_comment.commentator = request.user
+            new_comment.post = context["post"]
+            new_comment.save()
+        context["comment_form"] = comment_form
+        return render(request, self.template_name, context)

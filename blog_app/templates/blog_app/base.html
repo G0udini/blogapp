@@ -1,5 +1,4 @@
 {% load static %}
-{% load blog_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,24 +7,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock title %}</title>
     <link href= "{% static 'blog_app/blog.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.1/js.cookie.min.js"></script>
 </head>
 <body>
+    <div class="navigation">
+        <div class="contacts">
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            <a href="{% url 'blog:post_feed' %}">RSS feed</a>
+        </div>
+        <div class="main-blog">
+            <a href="{% url 'blog:post_list' %}">Blog</a>
+        </div>
+        <div class="search">
+            <a id="show-form" href="#" onclick="openForm()">Search </a>
+        </div>
+    </div>
     <div id="content">
         {% block content %}{% endblock content %}
     </div>
-    <div id="sidebar">
-        <h2>Blog</h2>
-        <p>This is blog. There are {% total_posts %} posts.</p>
-        <h3>Latests posts</h3>
-        {% show_latest_posts 3 %}
-        <h3>Most commented posts</h3>
-        {% get_most_commented_posts as most_commented_posts%}
-        <ul>
-            {% for post  in most_commented_posts %}
-                <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></li>
-            {% endfor %}
-        </ul>
-        <p><a href="{% url 'blog:post_feed' %}">Subscribe to my RSS feed</a></p>
-        </div>
+    <script>
+        const search = document.getElementById("search-field")
+        const search_attr = ["search-field", "show-form", "search-form", "search-input", "search-button"]
+        function openForm() {
+            search.style.display = "block";
+        }
+        document.onclick = function(e){
+            if (!(search_attr.includes(event.target.id))) {
+                search.style.display = 'none';
+            };
+        };
+    </script>
 </body>
 </html>

@@ -1,24 +1,44 @@
 {% extends 'blog_app/base.html' %}
-{% load blog_tags %}
+
 {% block title %}Blog{% endblock title %}
+
 {% block content %}
-    <h1>Blog</h1>
+    <div id="search-field">
+        <form id="search-form" action="." method="GET">
+            <input id="search-input" type="text" name="search" value="{{ current_name }}">
+            <input id="search-button" type="submit" value="search">
+        </form>
+    </div>
     {% if tag %}
-        <h2>Posts tagged with "{{ tag.name }}"</h2>
+        <p class="tagged">Posts tagged with "{{ tag }}"</p>
     {% endif %}
-    {% for post in posts %}
-        <h2>
-            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-        </h2>
-        <p class="tag">
-            Tags:
-            {% for tag in post.tags.all %}
-                <a href="{% url 'blog:post_list_by_tag' tag.slug %}">{{ tag.name }}</a>
-                {% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        </p>  
-        <p class="date">Published {{ post.publsih }} by {{post.author}}</p>
-        {{ post.body|markdown|truncatewords_html:30 }}
-    {% endfor %}  
-    {% include 'blog_app/pagination.html' with page=posts %}
+    <div class="content-wrapper">
+        {% include 'blog_app/post/list_wrapper.html' %}
+    </div>
+
+<script>
+$(document).ready(function () {
+    let url_href = window.location.href
+    let url_slug = window.location.pathname.split('/')[2];
+    let page_num = {{ page }};
+    let page_limit = {{ page_limit }}
+    let block_request = false;
+    $(window).scroll(function() {
+        var margin = ($(document).height() - $(window).height()) - 500;
+        if ($(window).scrollTop() >= margin && page_num < page_limit && block_request == false) {
+            block_request = true;
+            $.ajax({
+                type: "GET",
+                url: url_href,
+                dataType: "html",
+                data: {page: ++page_num},
+                success: function (data) {
+                    block_request = false;
+                    $(".content-wrapper").append(data).html()
+                }
+            });
+        }
+    });
+});
+</script>
 {% endblock content %}
