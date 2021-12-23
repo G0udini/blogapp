@@ -4,10 +4,10 @@
 
 {% block content %}
     {% if sent %}
-        <h1>E-mail successfully sent</h1>
+        <h1 style="text-align:center">E-mail successfully sent</h1>
         <p>"{{ post.title }}" was successfully sent to {{ form.cleaned_data.to }}</p>
     {% else %}
-        <h1>Share "{{ post.title }}" by e-mail</h1>
+        <h1 style="text-align:center">Share "{{ post.title }}" by e-mail</h1>
         <div class="share-form">
             <form action='.' method='POST'>
                 {{ form.as_p }}

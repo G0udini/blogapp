@@ -15,8 +15,8 @@
 <body>
     <div class="navigation">
         <div class="contacts">
-            <a href="#">About</a>
-            <a href="#">Contact</a>
+            <a href="{% url 'blog:post_create' %}">Create post</a>
+            <a href="{% url 'django.contrib.sitemaps.views.sitemap' %}">Sitemap</a>
             <a href="{% url 'blog:post_feed' %}">RSS feed</a>
         </div>
         <div class="main-blog">
@@ -25,7 +25,7 @@
         <div class="search">
             <a id="show-form" href="#" onclick="openForm()">Search </a>
         </div>
-    </div>
+    </div>  
     <div id="content">
         {% block content %}{% endblock content %}
     </div>

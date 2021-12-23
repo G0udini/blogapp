@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.contrib.postgres.search import TrigramSimilarity
 
 from .models import Comment, Post
-from .forms import EmailPostForm, CommentForm, SearchForm
+from .forms import EmailPostForm, CommentForm, SearchForm, PostForm
 
 
 class PostListView(View):
@@ -134,4 +134,25 @@ class PostDeatail(View):
             new_comment.post = context["post"]
             new_comment.save()
         context["comment_form"] = comment_form
+        return render(request, self.template_name, context)
+
+
+class PostAdd(View):
+    template_name = "blog_app/post/create.html"
+
+    def get(self, request, *args, **kwargs):
+        post_form = PostForm()
+        context = {"post_form": post_form, "saved_form": False}
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        post_form = PostForm(request.POST, request.FILES)
+        print(post_form)
+        print(request.FILES)
+        print(post_form.is_valid())
+        if post_form.is_valid():
+            new_post = post_form.save(commit=False)
+            new_post.author = request.user
+            new_post.save()
+        context = {"saved_form": True}
         return render(request, self.template_name, context)

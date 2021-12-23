@@ -1,0 +1,18 @@
+{% extends 'blog_app/base.html' %}
+
+{% block title %}New Post{% endblock title %}
+
+{% block content %}
+    {% if saved_form %}
+        <h1 style="text-align:center">The post was sucessfuly created and sent to the editors</h1>
+    {% else %}
+        <h1 style="text-align:center">Create New Post</h1>
+        <div class="post-create">
+            <form action='.' method='POST' enctype="multipart/form-data">
+                {{ post_form.as_p }}
+                {% csrf_token %}
+                <input type='submit' value="Send Post">
+            </form>
+        </div>
+    {% endif %}
+{% endblock content %}
