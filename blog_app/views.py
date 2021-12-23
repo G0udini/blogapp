@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.views.generic.base import View
 from django.core.mail import send_mail
@@ -137,7 +138,7 @@ class PostDeatail(View):
         return render(request, self.template_name, context)
 
 
-class PostAdd(View):
+class PostAdd(LoginRequiredMixin, View):
     template_name = "blog_app/post/create.html"
 
     def get(self, request, *args, **kwargs):
@@ -147,9 +148,6 @@ class PostAdd(View):
 
     def post(self, request, *args, **kwargs):
         post_form = PostForm(request.POST, request.FILES)
-        print(post_form)
-        print(request.FILES)
-        print(post_form.is_valid())
         if post_form.is_valid():
             new_post = post_form.save(commit=False)
             new_post.author = request.user
