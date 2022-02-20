@@ -5,6 +5,7 @@ from .feeds import LatestPostsFeed
 
 app_name = "blog_app"
 urlpatterns = [
+    path("create/", PostAdd.as_view(), name="post_create"),
     path("feed/", LatestPostsFeed(), name="post_feed"),
     path("tag/<slug:tag_slug>/", PostListView.as_view(), name="post_list_by_tag"),
     path(
@@ -13,6 +14,5 @@ urlpatterns = [
         name="post_detail",
     ),
     path("<int:post_id>/share/", PostShare.as_view(), name="post_share"),
-    path("create/", PostAdd.as_view(), name="post_create"),
     path("", PostListView.as_view(), name="post_list"),
 ]

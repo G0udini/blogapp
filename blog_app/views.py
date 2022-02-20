@@ -1,9 +1,8 @@
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
-from django.views.generic.base import View
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.views.generic.base import View
+from django.db.models import Count
 from django.contrib.postgres.search import TrigramSimilarity
 
 from .models import Comment, Post
@@ -138,7 +137,7 @@ class PostDeatail(View):
         return render(request, self.template_name, context)
 
 
-class PostAdd(LoginRequiredMixin, View):
+class PostAdd(View):
     template_name = "blog_app/post/create.html"
 
     def get(self, request, *args, **kwargs):

@@ -21,11 +21,11 @@
         {{ post.body|markdown }}
         <h3 style="text-align:center"><a href="{% url 'blog:post_share' post.id %}">Share this post</a></h3>
         <h2>Similar posts:</h2>
-        {% for post in similar_posts %}
-            <p style="padding: 10px"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
+        {% for similar_post in similar_posts %}
+            <p style="padding: 10px"><a href="{{ similar_post.get_absolute_url }}">{{ similar_post.title }}</a></p>
         {% empty %}
             <p style="padding: 10px">There are no similar posts yet.</p>
-        {% endfor %}
+        {% endfor %}    
     <br>
 
     <div class="comment-container">

@@ -3,6 +3,7 @@
 ### The blog where you can post arcticles, search something interesting for you or share posts with your friends
 
 ___
+![](preview.gif)
 
 ## Build & Run
 
